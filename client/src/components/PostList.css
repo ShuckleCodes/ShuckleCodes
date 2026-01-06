@@ -1,0 +1,156 @@
+.post-list-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.post-card {
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: #1a1a1a;
+  transition: transform 0.2s;
+}
+
+.post-card:hover {
+  transform: translateY(-4px);
+  border-color: #646cff;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.post-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge.published {
+  background: #4caf50;
+  color: white;
+}
+
+.badge.draft {
+  background: #ff9800;
+  color: white;
+}
+
+.excerpt {
+  color: #aaa;
+  margin: 1rem 0;
+  line-height: 1.6;
+}
+
+.post-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.category {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  background: #2a2a2a;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #64b5f6;
+}
+
+.post-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-block;
+  transition: all 0.2s;
+}
+
+.button-primary {
+  background: #646cff;
+  color: white;
+}
+
+.button-primary:hover {
+  background: #535bf2;
+}
+
+.button-secondary {
+  background: #2a2a2a;
+  color: white;
+}
+
+.button-secondary:hover {
+  background: #3a3a3a;
+}
+
+.button-danger {
+  background: #f44336;
+  color: white;
+}
+
+.button-danger:hover {
+  background: #d32f2f;
+}
+
+.empty-state {
+  text-align: center;
+  color: #888;
+  padding: 3rem;
+  font-size: 1.1rem;
+}
+
+.error {
+  color: #f44336;
+  padding: 1rem;
+  background: rgba(244, 67, 54, 0.1);
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
