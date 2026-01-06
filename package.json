@@ -8,6 +8,7 @@
     "build:client": "cd client && npm run build",
     "install:all": "npm run install:server && npm run install:client",
     "build:all": "npm run install:all && npm run build:client",
+    "db:init": "cd server && node dist/init-db.js",
     "start": "cd server && npm start"
   },
   "engines": {
