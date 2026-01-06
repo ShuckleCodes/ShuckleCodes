@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Full-stack TypeScript blog CMS",
   "scripts": {
-    "postinstall": "cd /home/lzpxczan/ShuckleCodes/server && npm install --omit=dev && cd /home/lzpxczan/ShuckleCodes/client && npm install",
     "install:server": "cd server && npm install --production",
     "install:client": "cd client && npm install",
     "build:client": "cd client && npm run build",
