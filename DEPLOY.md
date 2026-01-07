@@ -31,9 +31,34 @@ ShuckleCodes/
 │   ├── .env
 │   └── tsconfig.json
 └── public_html/         ← Frontend (static files only)
+    ├── .htaccess        (auto-created by cPanel)
     ├── index.html
-    └── assets/
+    ├── assets/
+    └── images/          (your blog post images)
 ```
+
+---
+
+## Managing Images for Blog Posts
+
+**Setup (one-time):**
+1. Create an `images/` folder in `/home/lzpxczan/public_html/images/`
+2. This folder will persist across deployments (excluded in GitHub Actions)
+
+**Uploading images:**
+1. Use FileZilla to connect to your server (ftp.shucklecodes.com)
+2. Upload images to `/home/lzpxczan/public_html/images/`
+3. In your Markdown content, reference them as: `![Caption](/images/filename.jpg)`
+
+**Example Markdown:**
+```markdown
+# My Post
+
+Here's an image:
+![My cool gadget](/images/gadget-photo.jpg)
+```
+
+**Supported formats:** JPG, PNG, GIF, WebP
 
 ---
 

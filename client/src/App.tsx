@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import PostList from './components/PostList'
+import PostView from './components/PostView'
 import PostForm from './components/PostForm'
 import './App.css'
 
@@ -23,6 +24,9 @@ function App() {
 
             {/* Posts list page */}
             <Route path="/posts" element={<PostList />} />
+
+            {/* View single post page */}
+            <Route path="/posts/:id" element={<PostView />} />
 
             {/* Create new post page */}
             <Route path="/posts/new" element={<PostForm />} />

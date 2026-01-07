@@ -1,7 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { createPost, updatePost, getPost, Post } from '../services/api';
 import './PostForm.css';
+
+// Custom sanitization schema that allows YouTube iframes
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    iframe: ['src', 'width', 'height', 'frameBorder', 'allow', 'allowFullScreen', 'title']
+  },
+  tagNames: [...(defaultSchema.tagNames || []), 'iframe']
+};
 
 /**
  * PostForm Component
@@ -29,6 +43,7 @@ function PostForm() {
   // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
 
   // If editing, load the existing post
   useEffect(() => {
@@ -170,19 +185,60 @@ function PostForm() {
           <small>URL-friendly version of the title (auto-generated)</small>
         </div>
 
-        {/* Content Field */}
+        {/* Content Field with Tabs */}
         <div className="form-group">
           <label htmlFor="content">
             Content <span className="required">*</span>
           </label>
-          <textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Write your post content here..."
-            rows={15}
-            required
-          />
+          <div className="tabs">
+            <button
+              type="button"
+              className={`tab ${activeTab === 'edit' ? 'active' : ''}`}
+              onClick={() => setActiveTab('edit')}
+            >
+              Edit (Markdown)
+            </button>
+            <button
+              type="button"
+              className={`tab ${activeTab === 'preview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('preview')}
+            >
+              Preview
+            </button>
+          </div>
+
+          {activeTab === 'edit' ? (
+            <textarea
+              id="content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Write your post content in Markdown...
+
+# Heading
+**bold** and *italic*
+
+![Image caption](/images/photo.jpg)
+
+## Embed YouTube
+Use Share → Embed on YouTube to get the iframe code:
+<iframe width='560' height='315' src='https://www.youtube.com/embed/VIDEO_ID' frameborder='0' allowfullscreen></iframe>"
+              rows={15}
+              required
+            />
+          ) : (
+            <div className="markdown-preview">
+              {content ? (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
+                >
+                  {content}
+                </ReactMarkdown>
+              ) : (
+                <p className="preview-empty">Nothing to preview yet. Write some content in the Edit tab.</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Excerpt Field */}

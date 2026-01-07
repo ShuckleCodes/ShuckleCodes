@@ -77,6 +77,7 @@ jobs:
           **/.well-known/**
           **/cgi-bin/**
           **/error_log
+          **/images/**
 
     # Note: Restarting Node.js app automatically is tricky on shared hosting
     # You may need to manually restart in cPanel after deployment
