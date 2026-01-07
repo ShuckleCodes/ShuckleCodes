@@ -31,13 +31,6 @@ app.use(express.json());
 // Parse URL-encoded bodies (for form submissions)
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from React build in production
-if (process.env.NODE_ENV === 'production') {
-  const clientBuildPath = path.join(__dirname, '../../client/dist');
-  app.use(express.static(clientBuildPath));
-  console.log(`📦 Serving static files from: ${clientBuildPath}`);
-}
-
 // --- Routes ---
 
 // Basic test route
@@ -52,13 +45,6 @@ app.get('/api/health', (req: Request, res: Response) => {
 
 // Mount posts routes
 app.use('/api/posts', postsRouter);
-
-// Serve React app for any non-API routes (must be AFTER API routes)
-if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
-  });
-}
 
 // --- Start Server ---
 app.listen(PORT, async () => {

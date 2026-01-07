@@ -1,0 +1,78 @@
+name: Deploy to WHC
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Build Backend
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install backend dependencies
+      run: |
+        cd server
+        npm install
+
+    - name: Build backend
+      run: |
+        cd server
+        npm run build
+
+    # Build Frontend
+    - name: Install frontend dependencies
+      run: |
+        cd client
+        npm install
+
+    - name: Build frontend
+      run: |
+        cd client
+        npm run build
+
+    # Deploy Backend via FTP
+    - name: Deploy backend to WHC
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./server/dist/
+        server-dir: /ShuckleCodes/dist/
+
+    - name: Deploy backend files
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./server/
+        server-dir: /ShuckleCodes/
+        exclude: |
+          **/node_modules/**
+          **/src/**
+          **/.env
+
+    # Deploy Frontend via FTP
+    - name: Deploy frontend to WHC
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./client/dist/
+        server-dir: /public_html/
+        dangerous-clean-slate: true  # Clears public_html before upload
+
+    # Note: Restarting Node.js app automatically is tricky on shared hosting
+    # You may need to manually restart in cPanel after deployment
