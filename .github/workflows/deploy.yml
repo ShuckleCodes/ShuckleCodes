@@ -72,7 +72,11 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./client/dist/
         server-dir: /public_html/
-        dangerous-clean-slate: true  # Clears public_html before upload
+        exclude: |
+          **/.htaccess
+          **/.well-known/**
+          **/cgi-bin/**
+          **/error_log
 
     # Note: Restarting Node.js app automatically is tricky on shared hosting
     # You may need to manually restart in cPanel after deployment
