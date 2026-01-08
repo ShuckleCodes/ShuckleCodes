@@ -20,14 +20,10 @@ function App() {
           <div className="header-content">
             <div className="header-top">
               <h1>ShuckleCodes</h1>
-              {isAuthenticated ? (
+              {isAuthenticated && (
                 <button onClick={logout} className="logout-button">
                   Logout
                 </button>
-              ) : (
-                <Link to="/login" className="login-link">
-                  Admin Login
-                </Link>
               )}
             </div>
             <p className="tagline">Exploring the intersection of gadgets, code, and creativity</p>

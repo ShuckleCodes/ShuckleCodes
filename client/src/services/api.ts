@@ -100,3 +100,16 @@ export async function deletePost(id: number): Promise<void> {
     throw new Error('Failed to delete post');
   }
 }
+
+/**
+ * Get all unique tags
+ */
+export async function getTags(): Promise<string[]> {
+  const response = await fetch(`${API_URL}/posts/tags`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch tags');
+  }
+
+  return response.json();
+}

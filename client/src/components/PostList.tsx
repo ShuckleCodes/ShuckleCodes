@@ -37,11 +37,10 @@ function PostList() {
   // State: for selected tag filter
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  // useEffect: runs when component mounts (loads)
-  // The empty array [] means "run once on mount"
+  // useEffect: runs when component mounts (loads) or auth state changes
   useEffect(() => {
     loadPosts();
-  }, []);
+  }, [isAuthenticated]);
 
   // Function to fetch posts from the API
   async function loadPosts() {
@@ -49,8 +48,8 @@ function PostList() {
       setLoading(true);
       setError('');
 
-      // Call our API service
-      const data = await getPosts();
+      // Call our API service - filter by published if not authenticated
+      const data = await getPosts(isAuthenticated ? undefined : true);
 
       // Update state with the fetched posts
       setPosts(data);
@@ -174,13 +173,15 @@ function PostList() {
                         <div className="featured-post-title">
                           <h2>{post.title}</h2>
                           <div className="featured-post-meta">
-                            <span className={`badge ${post.published ? 'published' : 'draft'}`}>
-                              {post.published ? 'Published' : 'Draft'}
-                            </span>
-                            {post.category && <span>• {post.category}</span>}
+                            {isAuthenticated && (
+                              <span className={`badge ${post.published ? 'published' : 'draft'}`}>
+                                {post.published ? 'Published' : 'Draft'}
+                              </span>
+                            )}
+                            {post.category && <span>{isAuthenticated ? '• ' : ''}{post.category}</span>}
                             {post.created_at && (
                               <span>
-                                • {new Date(post.created_at).toLocaleDateString('en-US', {
+                                {(isAuthenticated || post.category) && '• '}{new Date(post.created_at).toLocaleDateString('en-US', {
                                   year: 'numeric',
                                   month: 'short',
                                   day: 'numeric'
@@ -234,9 +235,11 @@ function PostList() {
                 <Link to={`/posts/${post.id}`} className="post-title-link">
                   <h2>{post.title}</h2>
                 </Link>
-                <span className={`badge ${post.published ? 'published' : 'draft'}`}>
-                  {post.published ? 'Published' : 'Draft'}
-                </span>
+                {isAuthenticated && (
+                  <span className={`badge ${post.published ? 'published' : 'draft'}`}>
+                    {post.published ? 'Published' : 'Draft'}
+                  </span>
+                )}
               </div>
 
               {post.excerpt && <p className="excerpt">{post.excerpt}</p>}

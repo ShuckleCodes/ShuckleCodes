@@ -45,6 +45,27 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/posts/tags
+ * Get all unique tags across all posts
+ */
+router.get('/tags', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT unnest(tags) as tag
+      FROM posts
+      WHERE tags IS NOT NULL AND array_length(tags, 1) > 0
+      ORDER BY tag ASC
+    `);
+
+    const tags = result.rows.map(row => row.tag);
+    res.json(tags);
+  } catch (error) {
+    console.error('Error fetching tags:', error);
+    res.status(500).json({ error: 'Failed to fetch tags' });
+  }
+});
+
+/**
  * GET /api/posts/:id
  * Get a single post by ID
  */

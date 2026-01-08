@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import { createPost, updatePost, getPost, Post } from '../services/api';
+import { createPost, updatePost, getPost, getTags, Post } from '../services/api';
 import './PostForm.css';
 
 // Custom sanitization schema that allows YouTube iframes
@@ -37,13 +37,22 @@ function PostForm() {
   const [content, setContent] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [category, setCategory] = useState('');
-  const [tags, setTags] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
   const [published, setPublished] = useState(false);
+
+  // Available tags from database
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
+
+  // Fetch available tags on mount
+  useEffect(() => {
+    loadAvailableTags();
+  }, []);
 
   // If editing, load the existing post
   useEffect(() => {
@@ -51,6 +60,16 @@ function PostForm() {
       loadPost();
     }
   }, [id]);
+
+  // Load all available tags
+  async function loadAvailableTags() {
+    try {
+      const tags = await getTags();
+      setAvailableTags(tags);
+    } catch (err) {
+      console.error('Failed to load tags:', err);
+    }
+  }
 
   // Load post data for editing
   async function loadPost() {
@@ -64,7 +83,7 @@ function PostForm() {
       setContent(post.content);
       setExcerpt(post.excerpt || '');
       setCategory(post.category || '');
-      setTags(post.tags?.join(', ') || '');
+      setSelectedTags(post.tags || []);
       setPublished(post.published || false);
     } catch (err) {
       setError('Failed to load post');
@@ -103,11 +122,15 @@ function PostForm() {
       setLoading(true);
       setError('');
 
-      // Convert comma-separated tags to array
-      const tagsArray = tags
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0);
+      // Combine selected tags with new tag if provided
+      const finalTags = [...selectedTags];
+      if (newTag.trim()) {
+        // Normalize new tag and add if not duplicate
+        const normalizedNewTag = newTag.trim().toLowerCase();
+        if (!finalTags.some(t => t.toLowerCase() === normalizedNewTag)) {
+          finalTags.push(newTag.trim());
+        }
+      }
 
       // Build post object
       const post: Post = {
@@ -116,7 +139,7 @@ function PostForm() {
         content,
         excerpt: excerpt || undefined,
         category: category || undefined,
-        tags: tagsArray.length > 0 ? tagsArray : undefined,
+        tags: finalTags.length > 0 ? finalTags : undefined,
         published,
       };
 
@@ -267,15 +290,38 @@ Use Share → Embed on YouTube to get the iframe code:
 
         {/* Tags Field */}
         <div className="form-group">
-          <label htmlFor="tags">Tags</label>
-          <input
-            id="tags"
-            type="text"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="javascript, react, nodejs (comma-separated)"
-          />
-          <small>Separate tags with commas</small>
+          <label>Tags</label>
+          {availableTags.length > 0 && (
+            <div className="tags-checkboxes">
+              {availableTags.map((tag) => (
+                <label key={tag} className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedTags([...selectedTags, tag]);
+                      } else {
+                        setSelectedTags(selectedTags.filter(t => t !== tag));
+                      }
+                    }}
+                  />
+                  <span>{tag}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          <div style={{ marginTop: '1rem' }}>
+            <label htmlFor="newTag">Add New Tag</label>
+            <input
+              id="newTag"
+              type="text"
+              value={newTag}
+              onChange={(e) => setNewTag(e.target.value)}
+              placeholder="Enter a new tag name"
+            />
+            <small>Adding a new tag will make it available for future posts</small>
+          </div>
         </div>
 
         {/* Published Checkbox */}

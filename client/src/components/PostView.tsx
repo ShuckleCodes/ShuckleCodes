@@ -77,6 +77,16 @@ function PostView() {
     );
   }
 
+  // Don't show unpublished posts to non-authenticated users
+  if (!isAuthenticated && !post.published) {
+    return (
+      <div className="post-view-container">
+        <p className="error">This post is not available.</p>
+        <Link to="/posts" className="button">Back to Posts</Link>
+      </div>
+    );
+  }
+
   return (
     <div className="post-view-container">
       <div className="post-view-header">
@@ -97,9 +107,11 @@ function PostView() {
         <header>
           <h1>{post.title}</h1>
           <div className="post-meta">
-            <span className={`badge ${post.published ? 'published' : 'draft'}`}>
-              {post.published ? 'Published' : 'Draft'}
-            </span>
+            {isAuthenticated && (
+              <span className={`badge ${post.published ? 'published' : 'draft'}`}>
+                {post.published ? 'Published' : 'Draft'}
+              </span>
+            )}
             {post.category && <span className="category">{post.category}</span>}
             {post.created_at && (
               <span className="date">
