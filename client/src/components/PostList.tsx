@@ -129,7 +129,7 @@ function PostList() {
         )}
       </div>
 
-      <div className="content-layout">
+      <div className={`content-layout ${allTags.length > 0 ? 'has-sidebar' : 'no-sidebar'}`}>
         {/* Tag Filter Sidebar */}
         {allTags.length > 0 && (
           <aside className="tag-filter-sidebar">
