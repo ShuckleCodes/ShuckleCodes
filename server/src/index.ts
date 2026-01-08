@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { testConnection } from './db.js';
 import postsRouter from './routes/posts.js';
+import authRouter from './routes/auth.js';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -42,6 +43,9 @@ app.get('/api', (req: Request, res: Response) => {
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
+
+// Mount auth routes
+app.use('/api/auth', authRouter);
 
 // Mount posts routes
 app.use('/api/posts', postsRouter);

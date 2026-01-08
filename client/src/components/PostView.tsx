@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { getPost, deletePost, Post } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import './PostView.css';
 
 // Custom sanitization schema that allows YouTube iframes
@@ -22,6 +23,7 @@ const sanitizeSchema = {
  * Displays a single blog post with full content rendered as Markdown
  */
 function PostView() {
+  const { isAuthenticated } = useAuth();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
@@ -79,14 +81,16 @@ function PostView() {
     <div className="post-view-container">
       <div className="post-view-header">
         <Link to="/posts" className="back-link">← Back to Posts</Link>
-        <div className="post-actions">
-          <Link to={`/posts/${post.id}/edit`} className="button button-secondary">
-            Edit
-          </Link>
-          <button onClick={handleDelete} className="button button-danger">
-            Delete
-          </button>
-        </div>
+        {isAuthenticated && (
+          <div className="post-actions">
+            <Link to={`/posts/${post.id}/edit`} className="button button-secondary">
+              Edit
+            </Link>
+            <button onClick={handleDelete} className="button button-danger">
+              Delete
+            </button>
+          </div>
+        )}
       </div>
 
       <article className="post-view-content">

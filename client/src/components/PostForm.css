@@ -305,3 +305,38 @@
   text-align: center;
   padding: 2rem;
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-container {
+    padding: 1rem;
+  }
+
+  .form-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .post-form {
+    padding: 1rem;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .markdown-preview {
+    min-height: 200px;
+    padding: 1rem;
+  }
+
+  .form-group textarea {
+    font-size: 0.9rem;
+  }
+}
