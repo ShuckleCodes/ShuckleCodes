@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { testConnection } from './db.js';
+import { runMigrations } from './migrations/runner.js';
 import postsRouter from './routes/posts.js';
 import authRouter from './routes/auth.js';
 
@@ -51,10 +52,19 @@ app.use('/api/auth', authRouter);
 app.use('/api/posts', postsRouter);
 
 // --- Start Server ---
-app.listen(PORT, async () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📝 API available at http://localhost:${PORT}/api`);
-
+async function startServer() {
   // Test database connection
-  await testConnection();
-});
+  const dbConnected = await testConnection();
+
+  if (dbConnected) {
+    // Run any pending migrations
+    await runMigrations();
+  }
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📝 API available at http://localhost:${PORT}/api`);
+  });
+}
+
+startServer();
