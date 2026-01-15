@@ -12,6 +12,8 @@ interface Post {
   excerpt?: string;
   category?: string;
   tags?: string[];
+  series?: string;
+  series_order?: number;
   published?: boolean;
   created_at?: Date;
   updated_at?: Date;
@@ -66,6 +68,27 @@ router.get('/tags', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/posts/series
+ * Get all unique series names across all posts
+ */
+router.get('/series', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT series
+      FROM posts
+      WHERE series IS NOT NULL AND series != ''
+      ORDER BY series ASC
+    `);
+
+    const seriesNames = result.rows.map(row => row.series);
+    res.json(seriesNames);
+  } catch (error) {
+    console.error('Error fetching series:', error);
+    res.status(500).json({ error: 'Failed to fetch series' });
+  }
+});
+
+/**
  * GET /api/posts/:id
  * Get a single post by ID
  */
@@ -92,7 +115,7 @@ router.get('/:id', async (req: Request, res: Response) => {
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { title, slug, content, excerpt, category, tags, published }: Post = req.body;
+    const { title, slug, content, excerpt, category, tags, series, series_order, published }: Post = req.body;
 
     // Validate required fields
     if (!title || !slug || !content) {
@@ -100,10 +123,10 @@ router.post('/', async (req: Request, res: Response) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO posts (title, slug, content, excerpt, category, tags, published)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO posts (title, slug, content, excerpt, category, tags, series, series_order, published)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [title, slug, content, excerpt, category, tags, published || false]
+      [title, slug, content, excerpt, category, tags, series || null, series_order || null, published || false]
     );
 
     res.status(201).json(result.rows[0]);
@@ -126,7 +149,7 @@ router.post('/', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { title, slug, content, excerpt, category, tags, published }: Post = req.body;
+    const { title, slug, content, excerpt, category, tags, series, series_order, published }: Post = req.body;
 
     const result = await pool.query(
       `UPDATE posts
@@ -136,11 +159,13 @@ router.put('/:id', async (req: Request, res: Response) => {
            excerpt = COALESCE($4, excerpt),
            category = COALESCE($5, category),
            tags = COALESCE($6, tags),
-           published = COALESCE($7, published),
+           series = $7,
+           series_order = $8,
+           published = COALESCE($9, published),
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = $8
+       WHERE id = $10
        RETURNING *`,
-      [title, slug, content, excerpt, category, tags, published, id]
+      [title, slug, content, excerpt, category, tags, series, series_order, published, id]
     );
 
     if (result.rows.length === 0) {

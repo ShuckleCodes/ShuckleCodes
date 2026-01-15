@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import { createPost, updatePost, getPost, getTags, Post } from '../services/api';
+import { createPost, updatePost, getPost, getTags, getSeries, Post } from '../services/api';
 import './PostForm.css';
 
 // Custom sanitization schema that allows YouTube iframes
@@ -39,19 +39,24 @@ function PostForm() {
   const [category, setCategory] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
+  const [series, setSeries] = useState('');
+  const [seriesOrder, setSeriesOrder] = useState<number | ''>('');
+  const [isCreatingNewSeries, setIsCreatingNewSeries] = useState(false);
   const [published, setPublished] = useState(false);
 
-  // Available tags from database
+  // Available tags and series from database
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableSeries, setAvailableSeries] = useState<string[]>([]);
 
   // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
 
-  // Fetch available tags on mount
+  // Fetch available tags and series on mount
   useEffect(() => {
     loadAvailableTags();
+    loadAvailableSeries();
   }, []);
 
   // If editing, load the existing post
@@ -61,6 +66,15 @@ function PostForm() {
     }
   }, [id]);
 
+  // Handle case where loaded series isn't in availableSeries yet
+  // (race condition between loadPost and loadAvailableSeries, or new series)
+  useEffect(() => {
+    if (series && availableSeries.length > 0 && !availableSeries.includes(series)) {
+      // Series exists but isn't in dropdown - add it to available options
+      setAvailableSeries(prev => [...prev, series].sort());
+    }
+  }, [series, availableSeries]);
+
   // Load all available tags
   async function loadAvailableTags() {
     try {
@@ -68,6 +82,16 @@ function PostForm() {
       setAvailableTags(tags);
     } catch (err) {
       console.error('Failed to load tags:', err);
+    }
+  }
+
+  // Load all available series
+  async function loadAvailableSeries() {
+    try {
+      const seriesList = await getSeries();
+      setAvailableSeries(seriesList);
+    } catch (err) {
+      console.error('Failed to load series:', err);
     }
   }
 
@@ -84,6 +108,8 @@ function PostForm() {
       setExcerpt(post.excerpt || '');
       setCategory(post.category || '');
       setSelectedTags(post.tags || []);
+      setSeries(post.series || '');
+      setSeriesOrder(post.series_order ?? '');
       setPublished(post.published || false);
     } catch (err) {
       setError('Failed to load post');
@@ -140,6 +166,8 @@ function PostForm() {
         excerpt: excerpt || undefined,
         category: category || undefined,
         tags: finalTags.length > 0 ? finalTags : undefined,
+        series: series || undefined,
+        series_order: seriesOrder !== '' ? seriesOrder : undefined,
         published,
       };
 
@@ -210,9 +238,11 @@ function PostForm() {
 
         {/* Content Field with Tabs */}
         <div className="form-group">
-          <label htmlFor="content">
-            Content <span className="required">*</span>
-          </label>
+          <div className="content-header">
+            <label htmlFor="content">
+              Content <span className="required">*</span>
+            </label>
+          </div>
           <div className="tabs">
             <button
               type="button"
@@ -228,6 +258,25 @@ function PostForm() {
             >
               Preview
             </button>
+          </div>
+
+          <div className="markdown-guide">
+            <strong>Markdown Quick Reference:</strong>
+            <div className="markdown-shortcuts">
+              <span># Heading 1</span>
+              <span>## Heading 2</span>
+              <span>### Heading 3</span>
+              <span>**bold**</span>
+              <span>*italic*</span>
+              <span>[link](url)</span>
+              <span>![image](url)</span>
+              <span>`code`</span>
+              <span>- list item</span>
+              <span>&gt; blockquote</span>
+            </div>
+            <a href="https://www.markdownguide.org/cheat-sheet/" target="_blank" rel="noopener noreferrer" className="full-guide-link">
+              View full markdown guide →
+            </a>
           </div>
 
           {activeTab === 'edit' ? (
@@ -323,6 +372,71 @@ Use Share → Embed on YouTube to get the iframe code:
             <small>Adding a new tag will make it available for future posts</small>
           </div>
         </div>
+
+        {/* Series Field */}
+        <div className="form-group">
+          <label htmlFor="series">Series</label>
+          {!isCreatingNewSeries ? (
+            <select
+              id="series"
+              value={series}
+              onChange={(e) => {
+                if (e.target.value === '__new__') {
+                  setIsCreatingNewSeries(true);
+                  setSeries('');
+                } else {
+                  setSeries(e.target.value);
+                }
+              }}
+            >
+              <option value="">No series (standalone post)</option>
+              {availableSeries.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+              <option value="__new__">+ Create new series...</option>
+            </select>
+          ) : (
+            <div className="new-series-input">
+              <input
+                id="newSeriesName"
+                type="text"
+                value={series}
+                onChange={(e) => setSeries(e.target.value)}
+                placeholder="Enter new series name"
+                autoFocus
+              />
+              <button
+                type="button"
+                className="button button-secondary"
+                onClick={() => {
+                  setIsCreatingNewSeries(false);
+                  setSeries('');
+                }}
+                style={{ marginLeft: '0.5rem' }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+          <small>Group related posts together in a series</small>
+        </div>
+
+        {/* Series Order Field - only shown when series is set */}
+        {series && (
+          <div className="form-group">
+            <label htmlFor="seriesOrder">Series Order</label>
+            <input
+              id="seriesOrder"
+              type="number"
+              step="0.01"
+              min="0"
+              value={seriesOrder}
+              onChange={(e) => setSeriesOrder(e.target.value ? parseFloat(e.target.value) : '')}
+              placeholder="e.g., 1, 2, 3 (use decimals like 1.5 to insert between)"
+            />
+            <small>Order of this post within the series (lower numbers appear first)</small>
+          </div>
+        )}
 
         {/* Published Checkbox */}
         <div className="form-group checkbox-group">

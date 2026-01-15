@@ -12,6 +12,8 @@ export interface Post {
   excerpt?: string;
   category?: string;
   tags?: string[];
+  series?: string;
+  series_order?: number;
   published?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -109,6 +111,19 @@ export async function getTags(): Promise<string[]> {
 
   if (!response.ok) {
     throw new Error('Failed to fetch tags');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get all unique series names
+ */
+export async function getSeries(): Promise<string[]> {
+  const response = await fetch(`${API_URL}/posts/series`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch series');
   }
 
   return response.json();

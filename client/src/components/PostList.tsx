@@ -8,6 +8,88 @@ import { getPosts, deletePost, Post } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import './PostList.css';
 
+// Tree data structures
+interface DateTreeYear {
+  year: number;
+  months: DateTreeMonth[];
+}
+
+interface DateTreeMonth {
+  month: number;
+  monthName: string;
+  posts: Post[];
+}
+
+interface SeriesGroup {
+  name: string;
+  posts: Post[];
+}
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'];
+
+// Helper to build date tree from posts
+function buildDateTree(posts: Post[]): DateTreeYear[] {
+  const yearMap = new Map<number, Map<number, Post[]>>();
+
+  posts.forEach(post => {
+    const date = new Date(post.created_at || 0);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+
+    if (!yearMap.has(year)) {
+      yearMap.set(year, new Map());
+    }
+    const monthMap = yearMap.get(year)!;
+    if (!monthMap.has(month)) {
+      monthMap.set(month, []);
+    }
+    monthMap.get(month)!.push(post);
+  });
+
+  const result: DateTreeYear[] = [];
+  yearMap.forEach((monthMap, year) => {
+    const months: DateTreeMonth[] = [];
+    monthMap.forEach((monthPosts, month) => {
+      months.push({
+        month,
+        monthName: MONTH_NAMES[month],
+        posts: monthPosts.sort((a, b) =>
+          new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        )
+      });
+    });
+    months.sort((a, b) => b.month - a.month);
+    result.push({ year, months });
+  });
+
+  return result.sort((a, b) => b.year - a.year);
+}
+
+// Helper to build series groups from posts
+function buildSeriesGroups(posts: Post[]): SeriesGroup[] {
+  const seriesMap = new Map<string, Post[]>();
+
+  posts.forEach(post => {
+    if (post.series) {
+      if (!seriesMap.has(post.series)) {
+        seriesMap.set(post.series, []);
+      }
+      seriesMap.get(post.series)!.push(post);
+    }
+  });
+
+  const result: SeriesGroup[] = [];
+  seriesMap.forEach((seriesPosts, name) => {
+    result.push({
+      name,
+      posts: seriesPosts.sort((a, b) => (a.series_order || 0) - (b.series_order || 0))
+    });
+  });
+
+  return result.sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // Custom sanitization schema that allows YouTube iframes
 const sanitizeSchema = {
   ...defaultSchema,
@@ -37,10 +119,94 @@ function PostList() {
   // State: for selected tag filter
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
+  // Tree expansion state with localStorage persistence
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(() => {
+    const saved = localStorage.getItem('treeExpandedYears');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('treeExpandedMonths');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  const [expandedSeries, setExpandedSeries] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('treeExpandedSeries');
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  const [seriesSectionExpanded, setSeriesSectionExpanded] = useState(() => {
+    const saved = localStorage.getItem('treeSeriesSectionExpanded');
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  const [dateSectionExpanded, setDateSectionExpanded] = useState(() => {
+    const saved = localStorage.getItem('treeDateSectionExpanded');
+    return saved ? JSON.parse(saved) : true;
+  });
+
   // useEffect: runs when component mounts (loads) or auth state changes
   useEffect(() => {
     loadPosts();
   }, [isAuthenticated]);
+
+  // Persist tree expansion state to localStorage
+  useEffect(() => {
+    localStorage.setItem('treeExpandedYears', JSON.stringify([...expandedYears]));
+  }, [expandedYears]);
+
+  useEffect(() => {
+    localStorage.setItem('treeExpandedMonths', JSON.stringify([...expandedMonths]));
+  }, [expandedMonths]);
+
+  useEffect(() => {
+    localStorage.setItem('treeExpandedSeries', JSON.stringify([...expandedSeries]));
+  }, [expandedSeries]);
+
+  useEffect(() => {
+    localStorage.setItem('treeSeriesSectionExpanded', JSON.stringify(seriesSectionExpanded));
+  }, [seriesSectionExpanded]);
+
+  useEffect(() => {
+    localStorage.setItem('treeDateSectionExpanded', JSON.stringify(dateSectionExpanded));
+  }, [dateSectionExpanded]);
+
+  // Toggle functions for tree nodes
+  function toggleYear(year: number) {
+    setExpandedYears(prev => {
+      const next = new Set(prev);
+      if (next.has(year)) {
+        next.delete(year);
+      } else {
+        next.add(year);
+      }
+      return next;
+    });
+  }
+
+  function toggleMonth(yearMonth: string) {
+    setExpandedMonths(prev => {
+      const next = new Set(prev);
+      if (next.has(yearMonth)) {
+        next.delete(yearMonth);
+      } else {
+        next.add(yearMonth);
+      }
+      return next;
+    });
+  }
+
+  function toggleSeries(seriesName: string) {
+    setExpandedSeries(prev => {
+      const next = new Set(prev);
+      if (next.has(seriesName)) {
+        next.delete(seriesName);
+      } else {
+        next.add(seriesName);
+      }
+      return next;
+    });
+  }
 
   // Function to fetch posts from the API
   async function loadPosts() {
@@ -116,6 +282,10 @@ function PostList() {
   const featuredPosts = sortedPosts.slice(0, 3);
   const olderPosts = sortedPosts.slice(3);
 
+  // Build tree structures for sidebar
+  const dateTree = buildDateTree(posts);
+  const seriesGroups = buildSeriesGroups(posts);
+
   // Render the posts list
   return (
     <div className="post-list-container">
@@ -128,31 +298,140 @@ function PostList() {
         )}
       </div>
 
-      <div className={`content-layout ${allTags.length > 0 ? 'has-sidebar' : 'no-sidebar'}`}>
-        {/* Tag Filter Sidebar */}
-        {allTags.length > 0 && (
-          <aside className="tag-filter-sidebar">
-            <h3>Filter by Tag</h3>
-            <button
-              className={`tag-filter-button ${!selectedTag ? 'active' : ''}`}
-              onClick={() => setSelectedTag(null)}
-            >
-              All ({posts.length})
-            </button>
-            {allTags.map((tag) => {
-              const count = posts.filter(p => p.tags?.includes(tag)).length;
-              return (
+      <div className="content-layout has-sidebar">
+        {/* Tree Navigation Sidebar */}
+        <aside className="tree-sidebar">
+          {/* Tag Filter Section */}
+          {allTags.length > 0 && (
+            <div className="tree-section tag-filter-section">
+              <h3>Filter by Tag</h3>
+              <div className="tag-filter-buttons">
                 <button
-                  key={tag}
-                  className={`tag-filter-button ${selectedTag === tag ? 'active' : ''}`}
-                  onClick={() => setSelectedTag(tag)}
+                  className={`tag-filter-button ${!selectedTag ? 'active' : ''}`}
+                  onClick={() => setSelectedTag(null)}
                 >
-                  {tag} ({count})
+                  All ({posts.length})
                 </button>
-              );
-            })}
-          </aside>
-        )}
+                {allTags.map((tag) => {
+                  const count = posts.filter(p => p.tags?.includes(tag)).length;
+                  return (
+                    <button
+                      key={tag}
+                      className={`tag-filter-button ${selectedTag === tag ? 'active' : ''}`}
+                      onClick={() => setSelectedTag(tag)}
+                    >
+                      {tag} ({count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Series Tree Section */}
+          {seriesGroups.length > 0 && (
+            <div className="tree-section">
+              <button
+                className="tree-section-header"
+                onClick={() => setSeriesSectionExpanded(!seriesSectionExpanded)}
+              >
+                <span className={`toggle-icon ${seriesSectionExpanded ? 'expanded' : ''}`}>
+                  {seriesSectionExpanded ? '▼' : '▶'}
+                </span>
+                <h3>Series</h3>
+              </button>
+              {seriesSectionExpanded && (
+                <ul className="tree-list">
+                  {seriesGroups.map(group => (
+                    <li key={group.name} className="tree-series">
+                      <button
+                        className="tree-toggle"
+                        onClick={() => toggleSeries(group.name)}
+                      >
+                        <span className={`toggle-icon ${expandedSeries.has(group.name) ? 'expanded' : ''}`}>
+                          {expandedSeries.has(group.name) ? '▼' : '▶'}
+                        </span>
+                        {group.name} ({group.posts.length})
+                      </button>
+                      {expandedSeries.has(group.name) && (
+                        <ul className="tree-posts">
+                          {group.posts.map((post, index) => (
+                            <li key={post.id} className="tree-post">
+                              <Link to={`/posts/${post.id}`} className="tree-post-link">
+                                <span className="series-number">{index + 1}.</span> {post.title}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {/* Date Tree Section */}
+          <div className="tree-section">
+            <button
+              className="tree-section-header"
+              onClick={() => setDateSectionExpanded(!dateSectionExpanded)}
+            >
+              <span className={`toggle-icon ${dateSectionExpanded ? 'expanded' : ''}`}>
+                {dateSectionExpanded ? '▼' : '▶'}
+              </span>
+              <h3>Browse by Date</h3>
+            </button>
+            {dateSectionExpanded && (
+              <ul className="tree-list">
+                {dateTree.map(yearNode => (
+                  <li key={yearNode.year} className="tree-year">
+                    <button
+                      className="tree-toggle"
+                      onClick={() => toggleYear(yearNode.year)}
+                    >
+                      <span className={`toggle-icon ${expandedYears.has(yearNode.year) ? 'expanded' : ''}`}>
+                        {expandedYears.has(yearNode.year) ? '▼' : '▶'}
+                      </span>
+                      {yearNode.year}
+                    </button>
+                    {expandedYears.has(yearNode.year) && (
+                      <ul className="tree-months">
+                        {yearNode.months.map(monthNode => {
+                          const monthKey = `${yearNode.year}-${monthNode.month}`;
+                          return (
+                            <li key={monthKey} className="tree-month">
+                              <button
+                                className="tree-toggle"
+                                onClick={() => toggleMonth(monthKey)}
+                              >
+                                <span className={`toggle-icon ${expandedMonths.has(monthKey) ? 'expanded' : ''}`}>
+                                  {expandedMonths.has(monthKey) ? '▼' : '▶'}
+                                </span>
+                                {monthNode.monthName} ({monthNode.posts.length})
+                              </button>
+                              {expandedMonths.has(monthKey) && (
+                                <ul className="tree-posts">
+                                  {monthNode.posts.map(post => (
+                                    <li key={post.id} className="tree-post">
+                                      <Link to={`/posts/${post.id}`} className="tree-post-link">
+                                        {post.title}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </aside>
 
         {/* Posts Section */}
         <div className="posts-section">

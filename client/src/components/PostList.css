@@ -32,29 +32,70 @@
   margin: 0 auto;
 }
 
-/* Tag Filter Sidebar */
-.tag-filter-sidebar {
+/* Tree Navigation Sidebar */
+.tree-sidebar {
   position: sticky;
   top: 2rem;
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 8px;
   padding: 1.5rem;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
 }
 
-.tag-filter-sidebar h3 {
+.tree-section {
+  margin-bottom: 1.5rem;
+}
+
+.tree-section:last-child {
+  margin-bottom: 0;
+}
+
+.tree-section > h3,
+.tag-filter-section h3 {
   margin: 0 0 1rem 0;
-  font-size: 1rem;
-  color: #e0e0e0;
+  font-size: 0.9rem;
+  color: #888;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.tag-filter-button {
-  display: block;
+.tree-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tree-section-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tree-section-header:hover h3 {
+  color: #646cff;
+}
+
+/* Tag Filter Section */
+.tag-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag-filter-button {
+  padding: 0.5rem 0.75rem;
   background: #2a2a2a;
   border: 1px solid #333;
   border-radius: 4px;
@@ -62,7 +103,7 @@
   cursor: pointer;
   text-align: left;
   transition: all 0.2s;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .tag-filter-button:hover {
@@ -75,6 +116,125 @@
   border-color: #646cff;
   color: white;
   font-weight: 600;
+}
+
+/* Tree Structure */
+.tree-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tree-year,
+.tree-month,
+.tree-series {
+  margin-bottom: 0.25rem;
+}
+
+.tree-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: #2a2a2a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: #e0e0e0;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.tree-toggle:hover {
+  background: #3a3a3a;
+  border-color: #646cff;
+}
+
+.toggle-icon {
+  font-size: 0.7rem;
+  width: 1rem;
+  text-align: center;
+  color: #888;
+  transition: color 0.2s;
+}
+
+.tree-toggle:hover .toggle-icon {
+  color: #646cff;
+}
+
+.tree-months,
+.tree-posts {
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0 1rem;
+  border-left: 1px solid #333;
+}
+
+.tree-month {
+  margin-bottom: 0.25rem;
+}
+
+.tree-month .tree-toggle {
+  background: transparent;
+  border-color: transparent;
+  padding: 0.4rem 0.75rem;
+}
+
+.tree-month .tree-toggle:hover {
+  background: #2a2a2a;
+  border-color: #333;
+}
+
+.tree-posts {
+  margin-left: 1.5rem;
+}
+
+.tree-post {
+  margin-bottom: 0.125rem;
+}
+
+.tree-post-link {
+  display: block;
+  padding: 0.375rem 0.75rem;
+  color: #aaa;
+  text-decoration: none;
+  font-size: 0.85rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-post-link:hover {
+  background: #2a2a2a;
+  color: #646cff;
+}
+
+.series-number {
+  color: #646cff;
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+/* Scrollbar styling for tree sidebar */
+.tree-sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tree-sidebar::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.tree-sidebar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+.tree-sidebar::-webkit-scrollbar-thumb:hover {
+  background: #444;
 }
 
 /* Posts Section */
@@ -241,23 +401,17 @@
     gap: 1.5rem;
   }
 
-  .tag-filter-sidebar {
+  .tree-sidebar {
     position: static;
-    display: flex;
+    max-height: none;
+  }
+
+  .tree-section {
+    margin-bottom: 1rem;
+  }
+
+  .tag-filter-buttons {
     flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  .tag-filter-sidebar h3 {
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-
-  .tag-filter-button {
-    display: inline-block;
-    width: auto;
-    margin-bottom: 0;
   }
 }
 

@@ -21,6 +21,8 @@ export async function initDatabase() {
         excerpt TEXT,
         category VARCHAR(100),
         tags TEXT[],
+        series VARCHAR(255),
+        series_order NUMERIC(10,2),
         published BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -35,6 +37,11 @@ export async function initDatabase() {
     // Create index on published for filtering
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_posts_published ON posts(published)
+    `);
+
+    // Create index on series for filtering posts by series
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_posts_series ON posts(series) WHERE series IS NOT NULL
     `);
 
     console.log('✅ Database tables created successfully');

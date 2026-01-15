@@ -3,6 +3,7 @@ import PostList from './components/PostList'
 import PostView from './components/PostView'
 import PostForm from './components/PostForm'
 import Login from './components/Login'
+import About from './components/About'
 import { useAuth } from './context/AuthContext'
 import './App.css'
 
@@ -19,7 +20,7 @@ function App() {
         <nav className="navbar">
           <div className="header-content">
             <div className="header-top">
-              <h1>ShuckleCodes</h1>
+              <h1>Shuckle Codes</h1>
               {isAuthenticated && (
                 <button onClick={logout} className="logout-button">
                   Logout
@@ -27,6 +28,10 @@ function App() {
               )}
             </div>
             <p className="tagline">Exploring the intersection of gadgets, code, and creativity</p>
+            <nav className="nav-links">
+              <Link to="/posts">Posts</Link>
+              <Link to="/about">About</Link>
+            </nav>
           </div>
         </nav>
 
@@ -37,6 +42,9 @@ function App() {
 
             {/* Login page */}
             <Route path="/login" element={<Login />} />
+
+            {/* About page */}
+            <Route path="/about" element={<About />} />
 
             {/* Posts list page */}
             <Route path="/posts" element={<PostList />} />
